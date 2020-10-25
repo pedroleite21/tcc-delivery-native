@@ -5,11 +5,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ActivityIndicator, useTheme } from 'react-native-paper';
 import { getCustomerInfo } from './api/login';
+import AuthContext from './contexts/auth_context';
+import CreateAccount from './screens/create_account';
 import Home from './screens/home';
 import Login from './screens/login';
+import Product from './screens/product';
 import SignIn from './screens/sign_in';
-import CreateAccount from './screens/create_account';
-import AuthContext from './contexts/auth_context';
 
 function Loading() {
   const theme = useTheme();
@@ -65,6 +66,7 @@ export default function Main() {
               {isLogged ? (
                 <>
                   <Stack.Screen name="Home" component={Home} />
+                  <Stack.Screen name="Product" component={Product} />
                 </>
               ) : (
                 <>

@@ -16,6 +16,7 @@ export default function SignIn() {
 
   const [login, { isLoading }] = useMutation(signIn, {
     onSuccess: () => {
+      console.log('oi');
       dispatchSignIn();
     },
     onError: (res) => {

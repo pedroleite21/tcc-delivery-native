@@ -1,8 +1,10 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
 import { DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
-import { setConsole } from 'react-query';
+import { setConsole, QueryCache, ReactQueryCacheProvider } from 'react-query';
 import Main from './src/main';
+
+const queryCache = new QueryCache();
 
 setConsole({
   log: console.log,
@@ -22,8 +24,10 @@ const theme = {
 
 export default function App() {
   return (
-    <PaperProvider theme={theme}>
-      <Main />
-    </PaperProvider>
+    <ReactQueryCacheProvider queryCache={queryCache}>
+      <PaperProvider theme={theme}>
+        <Main />
+      </PaperProvider>
+    </ReactQueryCacheProvider>
   );
 }
