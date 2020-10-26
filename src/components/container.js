@@ -7,7 +7,7 @@ import Loading from './loading';
 
 const ROUTES = ['Home', 'Orders', 'Profile'];
 
-export default function Container({ children }) {
+export default function Container({ children, absoluteChildren }) {
   const { name } = useRoute();
   const isLoading = useIsFetching() > 0;
   const showNavigation = ROUTES.indexOf(name) !== -1;
@@ -16,6 +16,7 @@ export default function Container({ children }) {
     <View style={styles.root}>
       <ScrollView style={styles.scrollView}>{children}</ScrollView>
       {showNavigation && <BottomNavigation />}
+      {absoluteChildren}
       <Loading isLoading={isLoading} />
     </View>
   );
