@@ -50,3 +50,14 @@ export async function createAccount(value) {
 
   return data;
 }
+
+export async function refreshToken(id) {
+  const { data } = await api.post('/customers/refreshtoken', { id });
+
+  await setCustomerInfo({
+    accessToken: data.accessToken,
+    id: data.id,
+  });
+
+  return data;
+}

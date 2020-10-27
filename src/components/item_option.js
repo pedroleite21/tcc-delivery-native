@@ -1,13 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   Caption,
   Checkbox,
   RadioButton,
   Subheading,
+  Text,
   Title,
 } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import update from 'immutability-helper';
 import { useProductContext } from '../contexts/product_context';
 
@@ -111,8 +113,105 @@ export function ItemOptionMultiple(option) {
       </ItemOptionTitle>
       <View style={styles.optionItems}>
         {items.map(({ id: itemId, name: itemName, addPrice }) => (
-          <View style={styles.item}>
+          <View key={itemName} style={styles.item}>
             <Checkbox status={isChecked(itemId)} onPress={setChecked(itemId)} />
+            <Subheading style={styles.itemTitle}>{itemName}</Subheading>
+            <Caption>+ R$ {addPrice}</Caption>
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
+function RangeOption({ qty = 0, full = false, onChange, id }) {
+  const removeDisabled = qty === 0;
+  const addDisabled = full;
+
+  const onPressRemove = () => onChange?.(id, qty - 1);
+
+  const onPressAdd = () => onChange?.(id, qty + 1);
+
+  return (
+    <View style={styles.rangeView}>
+      <TouchableOpacity
+        onPress={onPressRemove}
+        disabled={removeDisabled}
+        style={styles.rangeButton}>
+        <Icon name="remove" size={20} />
+      </TouchableOpacity>
+      <Text>{qty}</Text>
+      <TouchableOpacity
+        onPress={onPressAdd}
+        disabled={addDisabled}
+        style={styles.rangeButton}>
+        <Icon name="add" size={20} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+export function ItemOptionRange(option) {
+  const [range, setRange] = React.useState([]);
+  const { name, items, required, minItems, maxItems, id: optionId } = option;
+
+  const { initOption, setOptionValue } = useProductContext();
+
+  React.useEffect(() => {
+    initOption?.(option);
+  }, []);
+
+  const quantity = range.reduce((acc, { qty }) => acc + qty, 0);
+  const full = maxItems ? quantity >= maxItems : false;
+
+  const findIndex = (rangeId) => range.findIndex(({ id }) => id === rangeId);
+
+  const handleChange = (id, qty) => {
+    const index = findIndex(id);
+
+    let newRange;
+    if (index === -1) {
+      newRange = update(range, { $push: [{ id, qty }] });
+    } else {
+      if (qty > 0) {
+        newRange = update(range, { [index]: { $merge: { qty } } });
+      } else {
+        newRange = update(range, { $splice: [[index, 1]] });
+      }
+    }
+
+    const able = required ? quantity > minItems : true;
+    setOptionValue(optionId, newRange, able);
+    setRange(newRange);
+  };
+
+  const findQty = (id) => {
+    const index = findIndex(id);
+
+    if (index !== -1) {
+      return range[index].qty;
+    } else {
+      return 0;
+    }
+  };
+
+  return (
+    <>
+      <ItemOptionTitle
+        required={required}
+        minItems={minItems}
+        maxItems={maxItems}>
+        {name}
+      </ItemOptionTitle>
+      <View style={styles.optionItems}>
+        {items.map(({ id: itemId, name: itemName, addPrice }) => (
+          <View key={itemName} style={styles.item}>
+            <RangeOption
+              full={full}
+              id={itemId}
+              onChange={handleChange}
+              qty={findQty(itemId)}
+            />
             <Subheading style={styles.itemTitle}>{itemName}</Subheading>
             <Caption>+ R$ {addPrice}</Caption>
           </View>
@@ -138,5 +237,16 @@ const styles = StyleSheet.create({
   },
   optionItems: {
     padding: 16,
+  },
+  rangeView: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginRight: 8,
+  },
+  rangeButton: {
+    padding: 4,
+  },
+  iconDisabled: {
+    color: '#666',
   },
 });

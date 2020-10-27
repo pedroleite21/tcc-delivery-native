@@ -6,6 +6,7 @@ import { getItem } from '../api/products';
 import Container from '../components/container';
 import {
   ItemOptionMultiple,
+  ItemOptionRange,
   ItemOptionSingle,
 } from '../components/item_option';
 import ProductHeader from '../components/product_header';
@@ -16,7 +17,7 @@ import ProductProvider, {
 
 const options = {
   multiple: ItemOptionMultiple,
-  range: ItemOptionSingle,
+  range: ItemOptionRange,
   single: ItemOptionSingle,
 };
 
@@ -72,12 +73,8 @@ export default function Product({ navigation, route }) {
 const styles = StyleSheet.create({
   bottomBar: {
     backgroundColor: '#ddd',
-    bottom: 0,
     flexDirection: 'row',
-    left: 0,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    position: 'absolute',
-    right: 0,
   },
 });
