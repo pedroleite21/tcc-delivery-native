@@ -8,7 +8,7 @@ import { createAccount } from '../api/login';
 import Loading from '../components/loading';
 import { useAuth } from '../contexts/auth_context';
 
-export default function CreateAccount() {
+export default function CreateAccount({ navigation }) {
   const { control, handleSubmit, errors } = useForm();
   const { top } = useSafeAreaInsets();
   const [message, setMessage] = React.useState('');
@@ -27,9 +27,13 @@ export default function CreateAccount() {
     await create(data);
   };
 
+  const canGoBack = navigation.canGoBack();
+  const _goBack = () => navigation.goBack();
+
   return (
     <View style={styles.root}>
       <Appbar.Header statusBarHeight={top}>
+        {canGoBack && <Appbar.BackAction onPress={_goBack} />}
         <Appbar.Content title="Criar uma conta" />
       </Appbar.Header>
       <View style={styles.container}>

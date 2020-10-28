@@ -8,7 +8,7 @@ import { signIn } from '../api/login';
 import Loading from '../components/loading';
 import { useAuth } from '../contexts/auth_context';
 
-export default function SignIn() {
+export default function SignIn({ navigation }) {
   const { control, handleSubmit, errors } = useForm();
   const { top } = useSafeAreaInsets();
   const [message, setMessage] = React.useState('');
@@ -27,9 +27,13 @@ export default function SignIn() {
     await login(data);
   };
 
+  const canGoBack = navigation.canGoBack();
+  const _goBack = () => navigation.goBack();
+
   return (
     <View style={styles.root}>
       <Appbar.Header statusBarHeight={top}>
+        {canGoBack && <Appbar.BackAction onPress={_goBack} />}
         <Appbar.Content title="Entrar na sua conta" />
       </Appbar.Header>
       <View style={styles.container}>

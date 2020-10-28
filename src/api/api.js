@@ -7,7 +7,7 @@ const axios = require('axios');
  */
 const api = axios.create({
   baseURL: 'http://10.0.2.2:3000/api',
-  timeout: 5000,
+  timeout: 1200,
 });
 
 api.interceptors.response.use(

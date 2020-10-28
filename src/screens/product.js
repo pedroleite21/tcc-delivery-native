@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Button, Title, Text } from 'react-native-paper';
 import { useQuery } from 'react-query';
 import { getItem } from '../api/products';
 import Container from '../components/container';
@@ -21,12 +22,47 @@ const options = {
   single: ItemOptionSingle,
 };
 
-function BottomBar() {
-  const { isItemReady } = useProductContext();
+function BottomBar({ basePrice, onAddPress }) {
+  const {
+    dispatchPrice,
+    isItemReady,
+    itemQty,
+    prepareItemsForOrder,
+    price,
+    setItemQty,
+  } = useProductContext();
+
+  const _addItem = () => {
+    const optionsRendered = prepareItemsForOrder();
+    onAddPress?.(optionsRendered);
+  };
+
+  React.useEffect(() => {
+    if (basePrice) {
+      dispatchPrice?.({ type: 'init', payload: basePrice });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [basePrice]);
+
+  const removeItemQty = () => {
+    itemQty > 1 && setItemQty((prevQty) => prevQty - 1);
+  };
+
+  const addItemQty = () => setItemQty((prevQty) => prevQty + 1);
 
   return (
     <View style={styles.bottomBar}>
-      <Button mode="contained" disabled={!isItemReady}>
+      <View style={styles.itemAdd}>
+        <TouchableOpacity onPress={removeItemQty}>
+          <Icon name="remove" size={20} />
+        </TouchableOpacity>
+        <Text style={styles.itemQty}>{itemQty}</Text>
+        <TouchableOpacity onPress={addItemQty}>
+          <Icon name="add" size={20} />
+        </TouchableOpacity>
+      </View>
+      <Title>R$ {(itemQty * price).toFixed(2)}</Title>
+      <Button mode="contained" disabled={!isItemReady} onPress={_addItem}>
         Adicionar
       </Button>
     </View>
@@ -42,6 +78,8 @@ export default function Product({ navigation, route }) {
     enabled: id,
   });
 
+  const [notes, setNotes] = React.useState('');
+
   const renderOptions = () => {
     if (item && Array.isArray(item.options) && item.options.length > 0) {
       return item.options.map(({ id: optionId, type, ...rest }) => {
@@ -54,9 +92,22 @@ export default function Product({ navigation, route }) {
     return null;
   };
 
+  const _addToCart = (customizedItem) => {
+    customizedItem.id = item.id;
+    customizedItem.notes = notes.trim();
+
+    navigation.navigate('Cart', { newItem: customizedItem });
+  };
+
   return (
     <ProductProvider>
-      <Container absoluteChildren={<BottomBar />}>
+      <Container
+        absoluteChildren={
+          <BottomBar
+            basePrice={item && item.basePrice}
+            onAddPress={_addToCart}
+          />
+        }>
         <ProductHeader
           image={item && item.image}
           name={item && item.name}
@@ -64,7 +115,7 @@ export default function Product({ navigation, route }) {
           basePrice={item && item.basePrice}
         />
         {renderOptions()}
-        <TextArea />
+        <TextArea onChange={setNotes} />
       </Container>
     </ProductProvider>
   );
@@ -72,9 +123,24 @@ export default function Product({ navigation, route }) {
 
 const styles = StyleSheet.create({
   bottomBar: {
+    alignItems: 'center',
     backgroundColor: '#ddd',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
+  },
+  itemAdd: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  itemQty: {
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    fontSize: 20,
+    marginHorizontal: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
 });

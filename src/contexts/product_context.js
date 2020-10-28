@@ -4,8 +4,30 @@ const ProductContext = React.createContext({});
 
 export const useProductContext = () => React.useContext(ProductContext);
 
+function parseValue(payload) {
+  const value = typeof payload === 'string' ? payload.trim() : payload;
+  return parseFloat(value);
+}
+
+function priceReducer(state, action) {
+  const { type, payload } = action;
+  const value = parseValue(payload);
+  switch (type) {
+    case 'add':
+      return state + value;
+    case 'remove':
+      return state - value;
+    case 'init':
+      return value;
+    default:
+      throw new Error();
+  }
+}
+
 export default function ProductProvider({ children }) {
+  const [itemQty, setItemQty] = React.useState(1);
   const [options, setOptions] = React.useState({});
+  const [price, dispatchPrice] = React.useReducer(priceReducer, 0.0);
 
   const setOptionValue = React.useCallback((id, value, able) => {
     setOptions((prevOptions) => {
@@ -40,9 +62,34 @@ export default function ProductProvider({ children }) {
     [options],
   );
 
+  const prepareItemsForOrder = () => {
+    let renderedOptions = [];
+
+    Object.keys(options).forEach((v) => {
+      const { value } = options[v];
+      renderedOptions = renderedOptions.concat(value);
+    });
+
+    return {
+      itemPrice: price.toFixed(2),
+      options: renderedOptions,
+      qty: itemQty,
+    };
+  };
+
   return (
     <ProductContext.Provider
-      value={{ initOption, getOptionValue, setOptionValue, isItemReady }}>
+      value={{
+        dispatchPrice,
+        getOptionValue,
+        initOption,
+        isItemReady,
+        itemQty,
+        prepareItemsForOrder,
+        price,
+        setItemQty,
+        setOptionValue,
+      }}>
       {children}
     </ProductContext.Provider>
   );
