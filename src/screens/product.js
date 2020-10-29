@@ -15,6 +15,7 @@ import TextArea from '../components/text_area';
 import ProductProvider, {
   useProductContext,
 } from '../contexts/product_context';
+import { useCartContext } from '../contexts/cart_context';
 
 const options = {
   multiple: ItemOptionMultiple,
@@ -79,6 +80,7 @@ export default function Product({ navigation, route }) {
   });
 
   const [notes, setNotes] = React.useState('');
+  const { dispatchCart } = useCartContext();
 
   const renderOptions = () => {
     if (item && Array.isArray(item.options) && item.options.length > 0) {
@@ -93,10 +95,13 @@ export default function Product({ navigation, route }) {
   };
 
   const _addToCart = (customizedItem) => {
+    customizedItem.name = item.name;
     customizedItem.id = item.id;
     customizedItem.notes = notes.trim();
 
-    navigation.navigate('Cart', { newItem: customizedItem });
+    dispatchCart({ type: 'add_item', payload: customizedItem });
+    navigation.pop();
+    navigation.navigate('Cart');
   };
 
   return (

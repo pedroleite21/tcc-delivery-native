@@ -7,6 +7,8 @@ import io from 'socket.io-client';
 import { ActivityIndicator, useTheme } from 'react-native-paper';
 import { getCustomerInfo } from './api/login';
 import AuthContext from './contexts/auth_context';
+import Cart from './screens/cart';
+import CartProvider from './contexts/cart_context';
 import CreateAccount from './screens/create_account';
 import Home from './screens/home';
 import Login from './screens/login';
@@ -91,23 +93,26 @@ export default function Main() {
           <Loading />
         ) : (
           <AuthContext.Provider value={authFunctions}>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              {isLogged ? (
-                <>
-                  <Stack.Screen name="Home" component={Home} />
-                  <Stack.Screen name="Product" component={Product} />
-                </>
-              ) : (
-                <>
-                  <Stack.Screen name="Login" component={Login} />
-                  <Stack.Screen name="SignIn" component={SignIn} />
-                  <Stack.Screen
-                    name="CreateAccount"
-                    component={CreateAccount}
-                  />
-                </>
-              )}
-            </Stack.Navigator>
+            <CartProvider>
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                {isLogged ? (
+                  <>
+                    <Stack.Screen name="Home" component={Home} />
+                    <Stack.Screen name="Product" component={Product} />
+                    <Stack.Screen name="Cart" component={Cart} />
+                  </>
+                ) : (
+                  <>
+                    <Stack.Screen name="Login" component={Login} />
+                    <Stack.Screen name="SignIn" component={SignIn} />
+                    <Stack.Screen
+                      name="CreateAccount"
+                      component={CreateAccount}
+                    />
+                  </>
+                )}
+              </Stack.Navigator>
+            </CartProvider>
           </AuthContext.Provider>
         )}
       </NavigationContainer>

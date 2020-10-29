@@ -4,6 +4,7 @@ import { useRoute } from '@react-navigation/native';
 import { useIsFetching } from 'react-query';
 import BottomNavigation from './bottom_navigation';
 import Loading from './loading';
+import SeeCartButton from './see_cart_button';
 
 const ROUTES = ['Home', 'Orders', 'Profile'];
 
@@ -15,7 +16,12 @@ export default function Container({ children, absoluteChildren }) {
   return (
     <View style={styles.root}>
       <ScrollView style={styles.scrollView}>{children}</ScrollView>
-      {showNavigation && <BottomNavigation />}
+      {showNavigation && (
+        <>
+          <SeeCartButton />
+          <BottomNavigation />
+        </>
+      )}
       {absoluteChildren}
       <Loading isLoading={isLoading} />
     </View>
