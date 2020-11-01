@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import {
   Appbar,
   Button,
@@ -11,13 +11,16 @@ import {
   RadioButton,
   Subheading,
 } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TextInputMask from 'react-native-text-input-mask';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation } from 'react-query';
 import { getCustomerAddresses, postOrder } from '../api/customer';
 import { getPaymentMethods } from '../api/payment';
 import Container from '../components/container';
 import { useCartContext } from '../contexts/cart_context';
+import { useNavigation } from '@react-navigation/native';
+import Loading from '../components/loading';
 
 function PaymentModal({
   visible,
@@ -72,39 +75,99 @@ function PaymentModal({
   );
 }
 
+function AddressModal({ visible, addresses, hideModal }) {
+  const navigation = useNavigation();
+
+  return (
+    <Portal>
+      <Modal
+        visible={visible}
+        contentContainerStyle={[styles.modal, addressSelection.addressModal]}
+        onDismiss={hideModal}>
+        <ScrollView style={addressSelection.scrollViewModal}>
+          {addresses.length > 0 &&
+            addresses.map((v) => (
+              <TouchableOpacity
+                key={v.id}
+                style={addressSelection.address}
+                onPress={() => hideModal(v.id)}>
+                <Title>{v.name}</Title>
+              </TouchableOpacity>
+            ))}
+          <Button
+            mode="contained"
+            onPress={() => {
+              hideModal();
+              navigation.navigate('CreateAddress', { fromCart: true });
+            }}>
+            Criar novo
+          </Button>
+        </ScrollView>
+        <TouchableOpacity
+          style={addressSelection.closeButton}
+          onPress={() => hideModal()}>
+          <Icon name="close" size={24} />
+        </TouchableOpacity>
+      </Modal>
+    </Portal>
+  );
+}
+
 function AddressSelection({ addresses, value, handleChange }) {
+  const [addressModalVisible, setAddressModalVisible] = React.useState(false);
   const { takeout, addressId } = value;
 
   const address = addresses.find(({ id }) => id === addressId);
 
+  const handleHideModal = (id) => {
+    id && handleChange({ takeout: false, id });
+    setAddressModalVisible(false);
+  };
+
+  const ChooseAnotherButton = () => (
+    <Button onPress={() => setAddressModalVisible(true)}>Escolher</Button>
+  );
+
   return (
-    <View style={styles.view}>
-      <View style={addressSelection.buttons}>
-        <TouchableOpacity
-          onPress={() => handleChange({ takeout: false })}
-          style={[
-            addressSelection.button,
-            !takeout && addressSelection.buttonSelected,
-          ]}>
-          <Title>Entrega</Title>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => handleChange({ takeout: true })}
-          style={[
-            addressSelection.button,
-            takeout && addressSelection.buttonSelected,
-          ]}>
-          <Title>Retirada</Title>
-        </TouchableOpacity>
+    <>
+      <View style={styles.view}>
+        <View style={addressSelection.buttons}>
+          <TouchableOpacity
+            onPress={() => handleChange({ takeout: false })}
+            style={[
+              addressSelection.button,
+              !takeout && addressSelection.buttonSelected,
+            ]}>
+            <Title>Entrega</Title>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleChange({ takeout: true })}
+            style={[
+              addressSelection.button,
+              takeout && addressSelection.buttonSelected,
+            ]}>
+            <Title>Retirada</Title>
+          </TouchableOpacity>
+        </View>
+        <View>
+          {takeout ? (
+            <Text>Retirada endereço</Text>
+          ) : address ? (
+            <>
+              <Title>{address.name}</Title>
+              <ChooseAnotherButton />
+            </>
+          ) : (
+            <ChooseAnotherButton />
+          )}
+        </View>
       </View>
-      <View>
-        {address && (
-          <>
-            <Title>{address.name}</Title>
-          </>
-        )}
-      </View>
-    </View>
+      <AddressModal
+        visible={addressModalVisible}
+        addresses={addresses}
+        hideModal={handleHideModal}
+      />
+    </>
   );
 }
 
@@ -122,30 +185,54 @@ const addressSelection = StyleSheet.create({
     borderBottomColor: '#d81b60',
     borderBottomWidth: 2,
   },
+  addressModal: {
+    flex: 1,
+    marginVertical: 100,
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
+  scrollViewModal: {
+    paddingTop: 30,
+  },
+  address: {
+    borderColor: '#ddd',
+    borderRadius: 4,
+    borderWidth: 1,
+    marginBottom: 16,
+    padding: 8,
+  },
 });
 
-function RenderItems({ items }) {
+export function RenderItems({ items, fromOrder = false }) {
   if (Array.isArray(items) && items.length > 0) {
     return (
       <View style={styles.view}>
-        {items.map(({ id, qty, itemPrice, name, options, notes }) => {
-          const price = qty * itemPrice;
-          return (
-            <View key={`item-${id}`} style={styles.item}>
-              <Title style={styles.itemQty}>{qty}</Title>
-              <View style={styles.itemInfo}>
-                <Title>{name}</Title>
-                {options.map((op) => (
-                  <Text key={op.name}>
-                    • {op.qty} {op.name}
-                  </Text>
-                ))}
-                {notes ? <Text style={styles.itemNotes}>{notes}</Text> : null}
+        {items.map(
+          ({ id, qty, itemPrice, name, options, notes, order_item }) => {
+            const price = !fromOrder ? qty * itemPrice : undefined;
+            return (
+              <View key={`item-${id}`} style={styles.item}>
+                <Title style={styles.itemQty}>
+                  {qty || order_item?.quantity}
+                </Title>
+                <View style={styles.itemInfo}>
+                  <Title>{name}</Title>
+                  {options.map((op) => (
+                    <Text key={op.name}>
+                      • {op.qty || op.quantity} {op.name}
+                    </Text>
+                  ))}
+                  {notes ? <Text style={styles.itemNotes}>{notes}</Text> : null}
+                </View>
+                {price && <Title>R$ {price.toFixed(2)}</Title>}
               </View>
-              <Title>R$ {price.toFixed(2)}</Title>
-            </View>
-          );
-        })}
+            );
+          },
+        )}
       </View>
     );
   } else {
@@ -153,36 +240,47 @@ function RenderItems({ items }) {
   }
 }
 
-export default function Cart({ navigation }) {
+export default function Cart({ navigation, route }) {
   const { cart, dispatchCart } = useCartContext();
   const { top } = useSafeAreaInsets();
   const [disabled, setDisabled] = React.useState(true);
   const [paymentModalVisible, setPaymentModalVisible] = React.useState(false);
   const { data: payments } = useQuery('payment', getPaymentMethods);
-  const { data: addresses } = useQuery(
+  const { data: addresses = [] } = useQuery(
     'costumer_address',
     getCustomerAddresses,
   );
-
-  React.useEffect(() => {
-    if (addresses) {
-      const { id } = addresses.find(({ primary }) => primary === true);
-
-      dispatchCart({
-        type: 'set_delivery_address',
-        payload: { takeout: false, addressId: id },
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses]);
-
-  const _goBack = () => navigation.goBack();
 
   const _cleanCart = () => {
     dispatchCart({ type: 'clean_cart' });
     navigation.pop();
     navigation.navigate('Home');
   };
+
+  const [post, { isLoading }] = useMutation(postOrder, {
+    onSuccess: () => {
+      _cleanCart();
+    },
+  });
+
+  React.useEffect(() => {
+    const routeAddress = route.params?.addressId;
+    if (addresses.length > 0) {
+      const address = addresses.find(({ primary }) => primary === true);
+
+      const addressId = routeAddress || address.id;
+
+      if (addressId) {
+        dispatchCart({
+          type: 'set_delivery_address',
+          payload: { takeout: false, addressId: address.id },
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addresses]);
+
+  const _goBack = () => navigation.goBack();
 
   const _openPaymentModal = () => setPaymentModalVisible(true);
 
@@ -202,30 +300,37 @@ export default function Cart({ navigation }) {
     }
   };
 
-  const handleDeliveryChange = ({ takeout }) => {
+  const handleDeliveryChange = ({ takeout, id }) => {
     if (takeout) {
       dispatchCart({
         type: 'set_delivery_address',
         payload: { takeout },
       });
     } else {
-      const { id } = addresses.find(({ primary }) => primary === true);
+      const payload = {
+        takeout: false,
+        ...(id && { addressId: id }),
+      };
 
       dispatchCart({
         type: 'set_delivery_address',
-        payload: { takeout: false, addressId: id },
+        payload,
       });
     }
   };
 
   React.useEffect(() => {
-    if (cart?.items?.length > 0 && cart?.delivery && cart.payment?.paymentId) {
+    const isDeliverySafe = !cart?.delivery?.takeout
+      ? cart?.delivery?.addressId
+      : cart?.delivery?.takeout !== undefined;
+
+    if (cart?.items?.length > 0 && isDeliverySafe && cart.payment?.paymentId) {
       setDisabled(false);
     }
   }, [cart]);
 
   const _postOrder = async () => {
-    await postOrder(cart);
+    await post(cart);
   };
 
   const OrderButton = () => (
@@ -238,8 +343,15 @@ export default function Cart({ navigation }) {
     </TouchableOpacity>
   );
 
+  const AbsoluteChildren = () => (
+    <>
+      <OrderButton />
+      <Loading isLoading={isLoading} />
+    </>
+  );
+
   return (
-    <Container absoluteChildren={<OrderButton />}>
+    <Container absoluteChildren={<AbsoluteChildren />}>
       <Appbar.Header statusBarHeight={top}>
         <Appbar.BackAction onPress={_goBack} />
         <Appbar.Content title="Carrinho" />

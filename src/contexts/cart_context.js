@@ -32,7 +32,7 @@ function cartReducer(state, action) {
       newState = update(state, { payment: { change: { $set: payload } } });
       return newState;
     case 'set_delivery_address':
-      newState = update(state, { delivery: { $set: payload } });
+      newState = update(state, { delivery: { $merge: payload } });
       return newState;
     default:
       throw new Error();

@@ -53,9 +53,11 @@ const styles = StyleSheet.create({
     height: 120,
   },
   image: {
+    borderColor: '#ddd',
+    borderWidth: 1,
     height: 120,
-    width: 120,
     marginRight: 16,
+    width: 120,
   },
   grow: {
     flexGrow: 1,

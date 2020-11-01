@@ -64,6 +64,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   colorSelected: {
-    color: '#003f46',
+    color: '#d81b60',
   },
 });

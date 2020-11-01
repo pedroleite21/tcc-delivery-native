@@ -18,7 +18,7 @@ export async function getCustomerInfo() {
   }
 }
 
-export async function setCustomerInfo(data) {
+export async function setCustomerInfo(data = initialCustomerInfo) {
   try {
     const value = JSON.stringify(data);
     await AsyncStorage.setItem(CUSTOMER_INFO_KEY, value);
