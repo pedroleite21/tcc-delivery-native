@@ -246,7 +246,7 @@ export default function Cart({ navigation, route }) {
   const [disabled, setDisabled] = React.useState(true);
   const [paymentModalVisible, setPaymentModalVisible] = React.useState(false);
   const { data: payments } = useQuery('payment', getPaymentMethods);
-  const { data: addresses = [], refetch } = useQuery(
+  const { data: addresses = [] } = useQuery(
     'costumer_address',
     getCustomerAddresses,
     {
