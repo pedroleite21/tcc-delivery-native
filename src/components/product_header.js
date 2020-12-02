@@ -33,7 +33,7 @@ export default function ProductHeader({ basePrice, description, image, name }) {
       </View>
       <View style={styles.content}>
         <Headline style={styles.contentSpacing}>{name}</Headline>
-        {description && (
+        {typeof description === 'string' && description !== '' && (
           <Paragraph style={styles.contentSpacing}>{description}</Paragraph>
         )}
         <Subheading>R$ {basePrice}</Subheading>
