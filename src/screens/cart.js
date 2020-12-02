@@ -246,9 +246,12 @@ export default function Cart({ navigation, route }) {
   const [disabled, setDisabled] = React.useState(true);
   const [paymentModalVisible, setPaymentModalVisible] = React.useState(false);
   const { data: payments } = useQuery('payment', getPaymentMethods);
-  const { data: addresses = [] } = useQuery(
+  const { data: addresses = [], refetch } = useQuery(
     'costumer_address',
     getCustomerAddresses,
+    {
+      cacheTime: 0,
+    },
   );
 
   const _cleanCart = () => {
@@ -273,7 +276,7 @@ export default function Cart({ navigation, route }) {
       if (addressId) {
         dispatchCart({
           type: 'set_delivery_address',
-          payload: { takeout: false, addressId: address.id },
+          payload: { takeout: false, addressId },
         });
       }
     }

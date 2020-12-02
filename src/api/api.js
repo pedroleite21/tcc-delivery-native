@@ -1,3 +1,4 @@
+import env from './config';
 import { getCustomerInfo, refreshToken } from './login';
 
 const axios = require('axios');
@@ -6,7 +7,7 @@ const axios = require('axios');
  * @type {import('axios').AxiosInstance}
  */
 const api = axios.create({
-  baseURL: 'http://10.0.2.2:3000/api',
+  baseURL: env.apiURL,
   timeout: 1200,
 });
 

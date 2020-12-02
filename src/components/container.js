@@ -1,20 +1,20 @@
 import * as React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import PushNotification from 'react-native-push-notification';
 import { useIsFetching } from 'react-query';
 import io from 'socket.io-client';
 import BottomNavigation from './bottom_navigation';
 import Loading from './loading';
 import SeeCartButton from './see_cart_button';
 import { getCustomerInfo } from '../api/login';
-import { Snackbar } from 'react-native-paper';
 import { statusLabel } from '../screens/orders';
+import env from '../api/config';
 
 const ROUTES = ['Home', 'Orders', 'Profile', 'Order'];
 const MESSAGE_KEY = 'order_status';
 
 export default function Container({ children, absoluteChildren }) {
-  const [message, setMessage] = React.useState('');
   const socketRef = React.useRef(null);
   const { name } = useRoute();
   const isLoading = useIsFetching() > 0;
@@ -23,13 +23,17 @@ export default function Container({ children, absoluteChildren }) {
   React.useEffect(() => {
     async function subscribeSocket() {
       const { id } = await getCustomerInfo();
-      const socket = io(`http://10.0.2.2:3000/user/${id}`);
+      const socket = io(`${env.socketURL}/user/${id}`);
       socketRef.current = socket;
       socket.connect();
 
       socket.on(MESSAGE_KEY, (received) => {
-        const { id, status } = JSON.parse(received);
-        setMessage(`Pedido #${id} - ${statusLabel[status]}`);
+        const { id: orderId, status } = JSON.parse(received);
+        const message = `Pedido #${orderId} - ${statusLabel[status]}`;
+        PushNotification.localNotification({
+          channelId: 'channel-default',
+          message,
+        });
       });
 
       socket.on('disconnect', (reason) => {
@@ -58,9 +62,6 @@ export default function Container({ children, absoluteChildren }) {
         </>
       )}
       {absoluteChildren}
-      <Snackbar visible={message.length > 0} onDismiss={() => setMessage('')}>
-        {message}
-      </Snackbar>
       <Loading isLoading={isLoading} />
     </View>
   );

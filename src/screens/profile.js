@@ -96,9 +96,7 @@ export default function Profile({ navigation }) {
                 />
                 <Card.Content>
                   <Text style={styles.textNormal}>{address_1}</Text>
-                  {address_2 && (
-                    <Text style={styles.textNormal}>{address_2}</Text>
-                  )}
+                  <Text style={styles.textNormal}>{address_2}</Text>
                   <Text style={styles.textNormal}>{locality}</Text>
                 </Card.Content>
               </Card>
